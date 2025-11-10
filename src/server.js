@@ -1,34 +1,21 @@
-require("dotenv").config();
+import express from "express";
+import bodyParser from "body-parser";
+import apiRoutes from "./routes/api.js";
+import sequelize from "./config/database.js";
 
-const express = require("express");
-const configViewEngine = require("./config/viewEngine");
-const webRoutes = require("./routes/web");
-
-const mysql = require("mysql2");
+sequelize.sync({ alter: true }).then(() => {
+  console.log("All models were synchronized successfully.");
+});
 
 const app = express();
-const port = process.env.PORT || 8081;
-const hostname = process.env.HOST_NAME;
+const PORT = process.env.PORT || 8080;
 
-//config view engine
-configViewEngine(app);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use("/test", webRoutes);
+app.use("/api", apiRoutes);
 
-//test connection
-const connection = mysql.createConnection({
-  host: "localhost",
-  port: 3307,
-  user: "root",
-  password: "123456",
-  database: "pbl6_db",
-});
-
-connection.query("SELECT * FROM Users u", function (err, results, fields) {
-  console.log(">>>results: ", results);
-  console.log(">>>fields: ", fields);
-});
-
-app.listen(port, hostname, () => {
-  console.log(`Example app listening on port ${port}`);
+sequelize.sync().then(() => {
+  console.log("Database connected");
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
