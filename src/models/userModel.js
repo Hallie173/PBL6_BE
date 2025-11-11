@@ -8,33 +8,41 @@ const User = sequelize.define(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+      field: "userID",
     },
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
       unique: true,
+      field: "email",
     },
     displayName: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
+      field: "display_name",
     },
     passwordHash: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
+      field: "password_hash",
     },
     role: {
       type: DataTypes.ENUM("host", "member"),
       allowNull: false,
       defaultValue: "member",
+      field: "role",
     },
     avatar: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true,
+      field: "avatar",
     },
   },
   {
     tableName: "Users",
-    timestamps: false,
+    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: "updated_at",
   }
 );
 
