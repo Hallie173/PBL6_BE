@@ -7,6 +7,10 @@ import {
   verifyEmailCode,
 } from "../services/verificationService.js";
 import { generateToken } from "../utils/jwt.js";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 export const sendCode = async (req, res) => {
   try {
@@ -105,5 +109,66 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const updateProfile = async (req, res) => {
+  try {
+    const userID = req.user.userID;
+    const { displayName, role, newEmail, verificationCode } = req.body;
+
+    const user = await User.findByPk(userID);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (newEmail && newEmail !== user.email) {
+      const isValid = verifyEmailCode(newEmail, verificationCode);
+      if (!isValid) {
+        return res
+          .status(400)
+          .json({ message: "Invalid or expired verification code." });
+      }
+
+      const existingEmail = await User.findOne({ where: { email: newEmail } });
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already in use." });
+      }
+
+      user.email = newEmail;
+    }
+
+    if (req.file) {
+      if (user.avatar && fs.existsSync(user.avatar)) {
+        fs.unlinkSync(user.avatar);
+      }
+
+      const avatarPath = `uploads/${req.file.filename}`;
+      user.avatar = avatarPath;
+    }
+
+    if (displayName) user.displayName = displayName;
+    if (role) user.role = role;
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile updated successfully.",
+      user: {
+        userID: user.userID,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        avatar: user.avatar
+          ? `${process.env.BASE_URL || "http://localhost:8080"}/${user.avatar}`
+          : null,
+      },
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
