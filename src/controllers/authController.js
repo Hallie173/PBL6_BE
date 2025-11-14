@@ -12,6 +12,18 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, "avatar_" + Date.now() + ext);
+  },
+});
+
+export const upload = multer({ storage });
+
 export const sendCode = async (req, res) => {
   try {
     const { email } = req.body;
@@ -55,7 +67,7 @@ export const signup = async (req, res) => {
       email,
       displayName,
       passwordHash: hash,
-      role: role || "member",
+      role: role,
       avatar: null,
     });
 
@@ -65,7 +77,9 @@ export const signup = async (req, res) => {
         userID: newUser.userID,
         email: newUser.email,
         displayName: newUser.displayName,
-        role: newUser.role,
+        role:
+          newUser.role.charAt(0).toUpperCase() +
+          newUser.role.slice(1).toLowerCase(),
       },
     });
   } catch (error) {
@@ -102,8 +116,11 @@ export const login = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
-        role: user.role,
-        avatar: user.avatar,
+        role:
+          user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase(),
+        avatar: user.avatar
+          ? `${process.env.BASE_URL || "http://localhost:8080"}/${user.avatar}`
+          : null,
       },
     });
   } catch (error) {
@@ -161,7 +178,8 @@ export const updateProfile = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
-        role: user.role,
+        role:
+          user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase(),
         avatar: user.avatar
           ? `${process.env.BASE_URL || "http://localhost:8080"}/${user.avatar}`
           : null,
@@ -170,5 +188,27 @@ export const updateProfile = async (req, res) => {
   } catch (error) {
     console.error("Update profile error:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userID = req.user.userID;
+
+    const user = await User.findByPk(userID);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const match = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!match)
+      return res.status(400).json({ message: "Old password incorrect" });
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated" });
+  } catch (e) {
+    res.status(500).json({ message: "Server error" });
   }
 };

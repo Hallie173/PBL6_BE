@@ -10,16 +10,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// CORS
 app.use(
   cors({
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type, Authorization",
     credentials: true,
   })
 );
 
+// ---- FIX LỖI WILDCARD OPTIONS ----
 app.options(/.*/, cors());
+// ----------------------------------
 
 app.use("/uploads", express.static("uploads"));
 
