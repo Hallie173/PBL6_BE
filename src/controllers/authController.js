@@ -11,10 +11,30 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import jwt from "jsonwebtoken";
+
+// --- MIDDLEWARE ---
+
+export const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "Access denied!" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.error("JWT Verification Error:", error.message); // Thêm log để gỡ lỗi 401
+    return res.status(401).json({ message: "Invalid token!" });
+  }
+};
+
+// --- CẤU HÌNH MULTER ---
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, "http://localhost:3000/uploads/");
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -23,6 +43,8 @@ const storage = multer.diskStorage({
 });
 
 export const upload = multer({ storage });
+
+// --- AUTH CONTROLLERS ---
 
 export const sendCode = async (req, res) => {
   try {
@@ -42,9 +64,8 @@ export const sendCode = async (req, res) => {
 
 export const signup = async (req, res) => {
   try {
-    const { email, displayName, password, verificationCode } = req.body;
+    const { email, displayName, password, verificationCode } = req.body; // ✅ Verify code
 
-    // ✅ Verify code
     const isValid = verifyEmailCode(email, verificationCode);
     if (!isValid) {
       return res
@@ -120,12 +141,16 @@ export const login = async (req, res) => {
   }
 };
 
+// --- PROFILE CONTROLLERS ---
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const updateProfile = async (req, res) => {
   try {
+    // req.user được gán từ authMiddleware
     const userID = req.user.userID;
+    // Dữ liệu từ FormData (file đã được xử lý bởi multer)
     const { displayName, newEmail, verificationCode } = req.body;
 
     const user = await User.findByPk(userID);
@@ -149,13 +174,14 @@ export const updateProfile = async (req, res) => {
       user.email = newEmail;
     }
 
+    // Xử lý file (req.file chỉ tồn tại nếu frontend gửi FormData chứa file)
     if (req.file) {
       if (user.avatar && fs.existsSync(user.avatar)) {
-        fs.unlinkSync(user.avatar);
+        fs.unlinkSync(user.avatar); // Xóa avatar cũ
       }
 
       const avatarPath = `uploads/${req.file.filename}`;
-      user.avatar = avatarPath;
+      user.avatar = avatarPath; // Lưu path mới
     }
 
     if (displayName) user.displayName = displayName;
@@ -168,6 +194,7 @@ export const updateProfile = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
+        avatar: `http://localhost:8080/${user.avatar}`,
       },
     });
   } catch (error) {
