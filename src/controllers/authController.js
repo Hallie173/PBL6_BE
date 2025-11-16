@@ -42,7 +42,7 @@ export const sendCode = async (req, res) => {
 
 export const signup = async (req, res) => {
   try {
-    const { email, displayName, password, role, verificationCode } = req.body;
+    const { email, displayName, password, verificationCode } = req.body;
 
     // ✅ Verify code
     const isValid = verifyEmailCode(email, verificationCode);
@@ -67,7 +67,6 @@ export const signup = async (req, res) => {
       email,
       displayName,
       passwordHash: hash,
-      role: role,
       avatar: null,
     });
 
@@ -77,9 +76,6 @@ export const signup = async (req, res) => {
         userID: newUser.userID,
         email: newUser.email,
         displayName: newUser.displayName,
-        role:
-          newUser.role.charAt(0).toUpperCase() +
-          newUser.role.slice(1).toLowerCase(),
       },
     });
   } catch (error) {
@@ -116,11 +112,6 @@ export const login = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
-        role:
-          user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase(),
-        avatar: user.avatar
-          ? `${process.env.BASE_URL || "http://localhost:8080"}/${user.avatar}`
-          : null,
       },
     });
   } catch (error) {
@@ -135,7 +126,7 @@ const __dirname = path.dirname(__filename);
 export const updateProfile = async (req, res) => {
   try {
     const userID = req.user.userID;
-    const { displayName, role, newEmail, verificationCode } = req.body;
+    const { displayName, newEmail, verificationCode } = req.body;
 
     const user = await User.findByPk(userID);
     if (!user) {
@@ -168,7 +159,6 @@ export const updateProfile = async (req, res) => {
     }
 
     if (displayName) user.displayName = displayName;
-    if (role) user.role = role;
 
     await user.save();
 
@@ -178,11 +168,6 @@ export const updateProfile = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
-        role:
-          user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase(),
-        avatar: user.avatar
-          ? `${process.env.BASE_URL || "http://localhost:8080"}/${user.avatar}`
-          : null,
       },
     });
   } catch (error) {
