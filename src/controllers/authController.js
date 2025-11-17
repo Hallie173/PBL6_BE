@@ -194,7 +194,7 @@ export const updateProfile = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
-        avatar: `http://localhost:8080/${user.avatar}`,
+        avatar: `{http://localhost:8080}/${user.avatar}`,
       },
     });
   } catch (error) {
