@@ -34,7 +34,7 @@ export const authMiddleware = (req, res, next) => {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "http://localhost:3000/uploads/");
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -133,6 +133,7 @@ export const login = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
+        avatar: `http://localhost:8080/${user.avatar}`,
       },
     });
   } catch (error) {
@@ -194,7 +195,7 @@ export const updateProfile = async (req, res) => {
         userID: user.userID,
         email: user.email,
         displayName: user.displayName,
-        avatar: `{http://localhost:8080}/${user.avatar}`,
+        avatar: `http://localhost:8080/${user.avatar}`,
       },
     });
   } catch (error) {
