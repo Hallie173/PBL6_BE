@@ -14,7 +14,7 @@ export default (sequelize, DataTypes) => {
       },
 
       alert_type: {
-        type: DataTypes.ENUM("fire", "smoke", "fall"),
+        type: DataTypes.ENUM("fire", "fall"),
         allowNull: false,
       },
 
@@ -32,16 +32,6 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.ENUM("pending", "sent"),
         allowNull: false,
         defaultValue: "pending",
-      },
-
-      sent_at: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-
-      note: {
-        type: DataTypes.TEXT,
-        allowNull: true,
       },
     },
     {

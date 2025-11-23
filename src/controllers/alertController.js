@@ -1,51 +1,40 @@
-import { Alert, AlertRecipient } from "../models/index.js";
+import { Alert } from "../models/index.js";
 import snapshotService from "../services/snapshotService.js";
 
-export async function createAlertRecord({ userID, alert_type, content }) {
-  const alert = await Alert.create({
-    userID,
-    alert_type,
-    content,
-    initial_snapshot_url: null,
-  });
+export const receiveAlert = async (req, res) => {
+  console.log("📥 BODY:", req.body);
+  console.log("👤 USER:", req.user);
 
-  // tạo danh sách recipient cho alert
-  const recipients = await AlertRecipient.findAll();
-  console.log("Recipients fetched:", recipients.length);
-
-  for (const r of recipients) {
-    await r.update({ alertID: alert.alertID });
-  }
-
-  return alert;
-}
-
-export async function receiveAlert(req, res) {
   try {
-    const { alert_type, content } = req.body;
+    const userID = req.user?.userID;
+    console.log("🔍 userID:", userID);
 
-    if (!alert_type) {
-      return res.status(400).json({ message: "alert_type missing" });
+    if (!userID) {
+      return res.status(400).json({ message: "Missing userID" });
     }
 
-    const alert = await createAlertRecord({
-      userID: req.body.userID || 1,
-      alert_type: alert_type.toLowerCase(),
-      content: content || "",
+    const { alert_type, content } = req.body;
+
+    console.log("🔍 Create alert with:", { userID, alert_type, content });
+
+    const alert = await Alert.create({
+      userID,
+      alert_type,
+      content,
+      snapshot_url: null,
     });
 
-    return res.status(201).json({ ok: true, alertID: alert.alertID });
-  } catch (err) {
-    console.error("receiveAlert error:", err);
-    res.status(500).json({ message: "fail" });
+    console.log("✔ CREATED ALERT:", alert);
+
+    res.status(201).json({ ok: true, alertID: alert.alertID });
+  } catch (e) {
+    console.error("❌ ERROR in receiveAlert:", e);
+    res.status(500).json({ message: "Server error", error: e.toString() });
   }
-}
+};
 
-export async function uploadSnapshot(req, res) {
+export const uploadSnapshot = async (req, res) => {
   const alertID = req.params.id;
-
-  if (!req.body.snapshot)
-    return res.status(400).json({ message: "snapshot required" });
 
   const result = await snapshotService.saveBase64Snapshot(
     req.body.snapshot,
@@ -54,18 +43,10 @@ export async function uploadSnapshot(req, res) {
 
   if (!result) return res.status(500).json({ message: "save failed" });
 
-  res.json({ ok: true, path: result.publicPath });
-}
+  await Alert.update(
+    { snapshot_url: result.publicPath, status: "sent" },
+    { where: { alertID } }
+  );
 
-export async function getAlert(req, res) {
-  const alert = await Alert.findByPk(req.params.id);
-  if (!alert) return res.status(404).json({ message: "not found" });
-  res.json(alert);
-}
-
-export default {
-  receiveAlert,
-  createAlertRecord,
-  uploadSnapshot,
-  getAlert,
+  res.json({ ok: true, snapshot: result.publicPath });
 };

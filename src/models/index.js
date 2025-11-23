@@ -1,8 +1,8 @@
 import Sequelize from "sequelize";
 import dbConfig from "../config/database.js";
-
+import UserModel from "./userModel.js";
 import AlertModel from "./alertModel.js";
-import AlertRecipientModel from "./alertRecipient.js";
+import AlertEvidenceModel from "./alertEvidenceModel.js";
 
 const sequelize = new Sequelize(
   dbConfig.database,
@@ -16,12 +16,16 @@ const sequelize = new Sequelize(
   }
 );
 
+const User = UserModel(sequelize, Sequelize.DataTypes);
 const Alert = AlertModel(sequelize, Sequelize.DataTypes);
-const AlertRecipient = AlertRecipientModel(sequelize, Sequelize.DataTypes);
+const AlertEvidence = AlertEvidenceModel(sequelize, Sequelize.DataTypes);
 
 // relationships
-AlertRecipient.belongsTo(Alert, { foreignKey: "alertID" });
-Alert.hasMany(AlertRecipient, { foreignKey: "alertID" });
+User.hasMany(Alert, { foreignKey: "userID" });
+Alert.belongsTo(User, { foreignKey: "userID" });
 
-export { sequelize, Alert, AlertRecipient };
-export default { sequelize, Alert, AlertRecipient };
+Alert.hasMany(AlertEvidence, { foreignKey: "alertID" });
+AlertEvidence.belongsTo(Alert, { foreignKey: "alertID" });
+
+export { sequelize, User, Alert, AlertEvidence };
+export default { sequelize, User, Alert, AlertEvidence };

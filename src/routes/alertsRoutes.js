@@ -1,17 +1,12 @@
 // src/routes/alertsRoutes.js
 
 import express from "express";
-import alertController from "../controllers/alertController.js";
-import alertManager from "../controllers/alertManager.js";
+import { authMiddleware } from "../controllers/authController.js";
+import * as alertController from "../controllers/alertController.js";
 
 const router = express.Router();
 
-router.post("/alerts/receive", alertController.receiveAlert);
-
+router.post("/receive", authMiddleware, alertController.receiveAlert);
 router.post("/:id/snapshot", alertController.uploadSnapshot);
-
-router.post("/detect", alertManager.handleDetectionEvent);
-
-router.get("/:id", alertController.getAlert);
 
 export default router;
