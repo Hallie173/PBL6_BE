@@ -6,7 +6,8 @@ import * as alertController from "../controllers/alertController.js";
 
 const router = express.Router();
 
-router.post("/receive", authMiddleware, alertController.receiveAlert);
-router.post("/:id/snapshot", alertController.uploadSnapshot);
+router.get("/alerts", authMiddleware, alertController.getAlerts);
+router.delete("/alerts/:id", authMiddleware, alertController.deleteAlert);
+router.get("/alerts/:id", authMiddleware, alertController.getAlertDetail);
 
 export default router;

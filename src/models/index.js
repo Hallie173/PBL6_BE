@@ -24,8 +24,8 @@ const AlertEvidence = AlertEvidenceModel(sequelize, Sequelize.DataTypes);
 User.hasMany(Alert, { foreignKey: "userID" });
 Alert.belongsTo(User, { foreignKey: "userID" });
 
-Alert.hasMany(AlertEvidence, { foreignKey: "alertID" });
-AlertEvidence.belongsTo(Alert, { foreignKey: "alertID" });
+Alert.hasMany(AlertEvidence, { foreignKey: "alertID", as: "evidences" });
+AlertEvidence.belongsTo(Alert, { foreignKey: "alertID", as: "alert" });
 
 export { sequelize, User, Alert, AlertEvidence };
 export default { sequelize, User, Alert, AlertEvidence };
