@@ -7,6 +7,7 @@ import {
   sendCode,
   signup,
   login,
+  resetPassword,
   updateProfile,
   changePassword,
 } from "../controllers/authController.js";
@@ -29,7 +30,7 @@ const upload = multer({ storage });
 router.post("/send-verification-code", sendCode);
 router.post("/signup", signup);
 router.post("/login", login);
-
+router.post("/reset-password", resetPassword);
 router.get("/profile", authMiddleware, (req, res) => {
   res.json({
     message: "This is a protected profile route.",

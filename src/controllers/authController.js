@@ -143,6 +143,38 @@ export const login = async (req, res) => {
   }
 };
 
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, verificationCode, newPassword } = req.body;
+
+    if (!email || !verificationCode || !newPassword) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+
+    const isValid = verifyEmailCode(email, verificationCode);
+    if (!isValid) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired verification code." });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+
+    user.passwordHash = hash;
+    await user.save();
+
+    return res.status(200).json({ message: "Password reset successfully." });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // --- PROFILE CONTROLLERS ---
 
 const __filename = fileURLToPath(import.meta.url);
